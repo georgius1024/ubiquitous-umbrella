@@ -9,9 +9,7 @@ function load(data) {
   const map = data
     .map((item) => ({ ...item }))
     .map((item) => ({
-      ...item,
-      tree: () => map,
-      isLeft: () => item.left
+      ...item
     }))
     .reduce((map, item) => ({ ...map, [item.id]: item }), {});
   Object.values(map).forEach((item) => {
@@ -23,7 +21,6 @@ function load(data) {
         parent.right = item.id;
       }
     }
-    addChildrensMethod(item);
     delete item.left;
   });
   return map;
@@ -32,24 +29,21 @@ function pack(tree) {
   return Object.values(tree)
     .map((item) => ({ ...item }))
     .map((item) => {
-      item.left = item.isLeft();
+      const parent = tree[item.parent];
+      item.isLeft = (parent && parent.left === item.id) ?? null;
+      return item;
+    })
+    .map((item) => {
+      item.left = item.isLeft;
       delete item.isLeft;
-      delete item.tree;
       delete item.right;
-      delete item.children;
       return item;
     });
 }
 
-function addChildrensMethod(node) {
-  node.children = function () {
-    return [this.left, this.right].filter(Boolean);
-  }.bind(node);
-  return node;
-}
 function clone(tree) {
   return Object.values(tree)
-    .map((e) => addChildrensMethod({ ...e }))
+    .map((e) => ({ ...e }))
     .reduce((map, item) => ({ ...map, [item.id]: item }), {});
 }
 function insert(tree, parent, id, left, payload = {}) {
@@ -65,15 +59,14 @@ function insert(tree, parent, id, left, payload = {}) {
 
   const newNode = {
     ...payload,
-    id,
-    tree: () => updatedTree,
-    isLeft: () => left
+    id
   };
   if (child) {
     newNode[side] = child;
+    const childNode = updatedTree[child];
+    childNode.parent = id;
   }
   newNode.parent = parent;
-  addChildrensMethod(newNode);
   updatedTree[id] = newNode;
   return updatedTree;
 }
@@ -85,40 +78,50 @@ function insertRight(tree, parent, id, payload = {}) {
 }
 
 function remove(tree, id, keepLeft = true) {
-  const node = tree[id];
+  const updatedTree = clone(tree);
+
+  const node = updatedTree[id];
   if (!node) {
     throw new Error('Node not found!!!');
   }
-  const parentNode = tree[node.parent];
+  const parentNode = updatedTree[node.parent];
   if (!parentNode) {
     throw new Error('Can not remove root!!!');
   }
   const childToKeep = (keepLeft ? node.left : node.right) ?? null;
   const childToDrop = keepLeft ? node.right : node.left;
 
-  if (node.isLeft()) {
+  if (node.id === parentNode.left) {
     parentNode.left = childToKeep;
   } else {
     parentNode.right = childToKeep;
   }
-
-  const walk = (node) => {
-    if (node.left) {
-      walk(tree[node.left]);
-    }
-    if (node.right) {
-      walk(tree[node.right]);
-    }
-  };
-  walk(this.map[startFrom]);
+  if (childToKeep) {
+    const childNode = updatedTree[childToKeep];
+    childNode.parent = parentNode.id;
+  }
+  if (childToDrop) {
+    const walk = (node) => {
+      if (node.left) {
+        walk(updatedTree[node.left]);
+      }
+      if (node.right) {
+        walk(updatedTree[node.right]);
+      }
+      delete updatedTree[node.id];
+    };
+    walk(updatedTree[childToDrop]);
+  }
+  delete updatedTree[id];
+  return updatedTree;
 }
 module.exports = {
   valid,
   load,
   pack,
-  addChildrensMethod,
   clone,
   insert,
   insertLeft,
-  insertRight
+  insertRight,
+  remove
 };

@@ -51,39 +51,17 @@ describe('tree', () => {
   describe('load', () => {
     it('returns tree object', () => {
       const result = tree.load(testData);
-      expect(result).toHaveProperty('100.tree');
       expect(result).toHaveProperty('100.left', 101);
       expect(result).toHaveProperty('100.right', 102);
       expect(result).toHaveProperty('101.left', 103);
       expect(result).toHaveProperty('101.right', 104);
       expect(result).toHaveProperty('105.parent', 102);
-      expect(result['100'].tree()).toEqual(result);
-      expect(result['100'].isLeft()).toBeFalsy();
-      expect(result['101'].isLeft()).toBeTruthy();
-      expect(result['102'].isLeft()).toBeFalsy();
-      expect(result['100'].children()).toHaveLength(2);
     });
   });
   describe('pack', () => {
     it('returns initial object', () => {
       const result = tree.pack(tree.load(testData));
       expect(result).toEqual(testData);
-    });
-  });
-  describe('addChildrensMethod', () => {
-    it('adds method', () => {
-      expect(tree.addChildrensMethod({})).toHaveProperty('children');
-    });
-    it('children method works', () => {
-      const result = {};
-      tree.addChildrensMethod(result);
-      expect(result.children()).toHaveLength(0);
-      result.left = true;
-      expect(result.children()).toHaveLength(1);
-      result.right = true;
-      expect(result.children()).toHaveLength(2);
-      delete result.left;
-      expect(result.children()).toHaveLength(1);
     });
   });
   describe('clone', () => {
@@ -120,34 +98,92 @@ describe('tree', () => {
       const rightNode = secondUpdated['1001'];
       expect(leftNode).toHaveProperty('id', 1000);
       expect(leftNode).toHaveProperty('parent', 107);
-      expect(leftNode.isLeft()).toBe(true);
-      expect(leftNode.children).toHaveLength(0);
       expect(rightNode).toHaveProperty('id', 1001);
       expect(rightNode).toHaveProperty('parent', 107);
-      expect(rightNode.isLeft()).toBe(false);
-      expect(rightNode.children).toHaveLength(0);
 
       expect(instance['107']).not.toHaveProperty('left');
       expect(instance['107']).not.toHaveProperty('right');
-      expect(instance['107'].children()).toHaveLength(0);
 
       expect(firstUpdated['107']).toHaveProperty('left', 1000);
       expect(firstUpdated['107']).not.toHaveProperty('right');
-      //expect(firstUpdated['107'].children()).toHaveLength(1);
 
       expect(secondUpdated['107']).toHaveProperty('left', 1000);
       expect(secondUpdated['107']).toHaveProperty('right', 1001);
-      expect(secondUpdated['107'].children()).toHaveLength(2);
+    });
+    it('replaces old child node', () => {
+      const instance = tree.load(testData);
+      const updated = tree.insert(instance, 101, 1000, true);
+      expect(instance['101']).not.toHaveProperty('left', 1000);
+      expect(updated['101']).toHaveProperty('left', 1000);
+      expect(updated['1000']).toHaveProperty('left', 103);
+      expect(updated['103']).toHaveProperty('parent', 1000);
     });
   });
   describe('insert left & right', () => {
     it('both functions are working', () => {
       const instance = tree.load(testData);
-      const leftNode = tree.insertLeft(instance, 107, 1000);
-      const rightNode = tree.insertRight(instance, 107, 1001);
-      expect(instance['107']).toHaveProperty('left', 1000);
-      expect(instance['107']).toHaveProperty('right', 1001);
-      expect(instance['107'].children()).toHaveLength(2);
+      const updated = tree.insertRight(
+        tree.insertLeft(instance, 107, 1000),
+        107,
+        1001
+      );
+      expect(updated['107']).toHaveProperty('left', 1000);
+      expect(updated['107']).toHaveProperty('right', 1001);
+    });
+  });
+  describe('remove', () => {
+    it('throws error when node not found', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.remove(instance, -1).toThrow();
+      });
+    });
+    it('throws error when removing root', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.remove(instance, 100).toThrow();
+      });
+    });
+    it('removes leafs nodes', () => {
+      const instance = tree.load(testData);
+      const updated = tree.remove(instance, 107);
+      expect(updated['107']).toBeFalsy();
+    });
+    it('removes parents with 1 child', () => {
+      const instance = tree.load(testData);
+      const updated = tree.remove(instance, 106);
+      expect(updated['105']).toBeTruthy();
+      expect(updated['106']).toBeFalsy();
+      expect(updated['107']).toBeTruthy();
+      expect(updated['105']).toHaveProperty('left', 107);
+      expect(updated['107']).toHaveProperty('parent', 105);
+    });
+    it('removes parents with 2 child', () => {
+      const instance = tree.load(testData);
+      const updated = tree.remove(instance, 105);
+      expect(updated['105']).toBeFalsy();
+      expect(updated['106']).toBeTruthy();
+      expect(updated['107']).toBeTruthy();
+      expect(updated['102']).toHaveProperty('left', 106);
+      expect(updated['106']).toHaveProperty('parent', 102);
+    });
+    it('removes a branch, keeping left side', () => {
+      const instance = tree.load(testData);
+      const updated = tree.remove(instance, 101, true);
+      expect(updated['101']).toBeFalsy();
+      expect(updated['103']).toBeTruthy();
+      expect(updated['104']).toBeFalsy();
+      expect(updated['100']).toHaveProperty('left', 103);
+      expect(updated['103']).toHaveProperty('parent', 100);
+    });
+    it('removes a branch, keeping right side', () => {
+      const instance = tree.load(testData);
+      const updated = tree.remove(instance, 101, false);
+      expect(updated['101']).toBeFalsy();
+      expect(updated['103']).toBeFalsy();
+      expect(updated['104']).toBeTruthy();
+      expect(updated['100']).toHaveProperty('left', 104);
+      expect(updated['104']).toHaveProperty('parent', 100);
     });
   });
 });
