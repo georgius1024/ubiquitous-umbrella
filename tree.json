@@ -1,0 +1,36 @@
+[
+  {
+    "parent": null,
+    "id": 100
+  },
+  {
+    "parent": 100,
+    "id": 101,
+    "left": true
+  },
+  {
+    "parent": 100,
+    "id": 102,
+    "left": false
+  },
+  {
+    "parent": 101,
+    "id": 103,
+    "left": true
+  },
+  {
+    "parent": 101,
+    "id": 104,
+    "left": false
+  },
+  {
+    "parent": 102,
+    "id": 105,
+    "left": true
+  },
+  {
+    "parent": 102,
+    "id": 106,
+    "left": false
+  }
+]
