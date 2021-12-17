@@ -249,6 +249,44 @@ describe('tree', () => {
       expect(updated).toEqual({ payload1: 101, payload2: 'string' });
     });
   });
+  describe('swapChildren', () => {
+    test('throws on not valid moves', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.swapChildren(instance, -105);
+      }).toThrow();
+      expect(() => {
+        tree.swapChildren(instance, 105);
+      }).not.toThrow();
+    });
+
+    test('swap left and right children of node', () => {
+      const instance = tree.load(testData);
+      const updated = tree.swapChildren(instance, 101);
+      /*
+              (100)
+              /    \
+          (101)    (102)
+          /   \      |
+      (104) (103) (105)
+                    |
+                  (106)
+                    |
+                  (107)
+      */
+      expect(updated['101']).toHaveProperty('parent', 100);
+      expect(updated['101']).toHaveProperty('left', 104);
+      expect(updated['101']).toHaveProperty('right', 103);
+
+      expect(updated['103']).toHaveProperty('parent', 101);
+      expect(updated['103']).not.toHaveProperty('left');
+      expect(updated['103']).not.toHaveProperty('right');
+
+      expect(updated['104']).toHaveProperty('parent', 101);
+      expect(updated['104']).not.toHaveProperty('left');
+      expect(updated['104']).not.toHaveProperty('right');
+    });
+  });
   describe('moveNode', () => {
     test('throws on not valid moves', () => {
       const instance = tree.load(testData);

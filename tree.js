@@ -159,6 +159,27 @@ function payload(node) {
   const { id, parent, left, right, ...rest } = node;
   return rest;
 }
+
+function swapChildren(tree, node) {
+  const updatedTree = clone(tree);
+
+  const parentNode = updatedTree[node];
+  if (!parentNode) {
+    throw new Error('Node not found!!!');
+  }
+
+  const { left, right } = parentNode;
+  parentNode.left = right;
+  parentNode.right = left;
+  if (!parentNode.left) {
+    delete parentNode.left;
+  }
+  if (!parentNode.right) {
+    delete parentNode.right;
+  }
+  return updatedTree;
+}
+
 function moveNode(tree, target, source, left = true) {
   const targetNode = tree[target];
   if (!targetNode) {
@@ -174,8 +195,19 @@ function moveNode(tree, target, source, left = true) {
   if (sourceNode.left && sourceNode.right) {
     throw new Error("Can't move subtree!!!");
   }
-  if (sourceNode.parent === targetNode.id && left) {
-    return moveNode(tree, source, target, left);
+  if (targetNode.left === sourceNode.id) {
+    if (left) {
+      return moveNode(tree, source, target, left);
+    } else {
+      return swapChildren(tree, targetNode.id);
+    }
+  }
+  if (targetNode.right === sourceNode.id) {
+    if (!left) {
+      return moveNode(tree, source, target, left);
+    } else {
+      return swapChildren(tree, targetNode.id);
+    }
   }
   const updated = removeNode(tree, source); // <== preserve leftmost
 
@@ -245,6 +277,7 @@ module.exports = {
   removeNode,
   removeSubtree,
   hasAsParent,
+  swapChildren,
   moveNode,
   moveSubtree
 };
