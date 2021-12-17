@@ -174,7 +174,7 @@ function moveNode(tree, target, source, left = true) {
   if (sourceNode.left && sourceNode.right) {
     throw new Error("Can't move subtree!!!");
   }
-  if (sourceNode.parent === targetNode.id) {
+  if (sourceNode.parent === targetNode.id && left) {
     return moveNode(tree, source, target, left);
   }
   const updated = removeNode(tree, source); // <== preserve leftmost

@@ -457,6 +457,24 @@ describe('tree', () => {
       expect(updated['106']).not.toHaveProperty('right');
       expect(updated['106']).toHaveProperty('left', 107);
     });
+    test('move leaf node to another side of parent', () => {
+      const instance = tree.removeNode(tree.load(testData), 104);
+      const updated = tree.moveNode(instance, 101, 103, false);
+      /*
+              (100)
+             /     \
+          (101)    (102)
+             \       |
+            (103)  (105)
+                     |
+                   (106)
+                     |
+                   (107)
+      */
+      expect(updated['101']).toHaveProperty('parent', 100);
+      expect(updated['101']).not.toHaveProperty('left');
+      expect(updated['101']).toHaveProperty('right', 103);
+    });
   });
   describe('hasAsParent', () => {
     it('returns true when third param is parent for second', () => {
