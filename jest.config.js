@@ -18,7 +18,7 @@ module.exports = {
   clearMocks: true,
 
   // Indicates whether the coverage information should be collected while executing the test
-  // collectCoverage: false,
+  collectCoverage: true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
   // collectCoverageFrom: null,
@@ -27,9 +27,7 @@ module.exports = {
   coverageDirectory: 'coverage',
 
   // An array of regexp pattern strings used to skip coverage collection
-  coveragePathIgnorePatterns: [
-    '/node_modules/'
-  ],
+  coveragePathIgnorePatterns: ['/node_modules/'],
 
   // A list of reporter names that Jest uses when writing coverage reports
   // coverageReporters: [
@@ -64,9 +62,7 @@ module.exports = {
   // maxWorkers: "50%",
 
   // An array of directory names to be searched recursively up from the requiring module's location
-  moduleDirectories: [
-    'node_modules'
-  ],
+  moduleDirectories: ['node_modules'],
 
   // An array of file extensions your modules use
   // moduleFileExtensions: [
@@ -141,9 +137,7 @@ module.exports = {
   // testLocationInResults: false,
 
   // The glob patterns Jest uses to detect test files
-  testMatch: [
-    '**/?(*.)+(spec|test).[tj]s?(x)'
-  ]
+  testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)']
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   // testPathIgnorePatterns: [
@@ -184,4 +178,4 @@ module.exports = {
 
   // Whether to use watchman for file crawling
   // watchman: true,
-}
+};
