@@ -75,7 +75,7 @@ function insertLeft(tree, parent, id, payload = {}) {
 function insertRight(tree, parent, id, payload = {}) {
   return insert(tree, parent, id, false, payload);
 }
-function remove(tree, id, keepLeft = true) {
+function removeNode(tree, id, keepLeft = true) {
   const updatedTree = clone(tree);
 
   const node = updatedTree[id];
@@ -121,6 +121,40 @@ function remove(tree, id, keepLeft = true) {
   delete updatedTree[id];
   return updatedTree;
 }
+function removeSubtree(tree, id) {
+  const updatedTree = clone(tree);
+
+  const node = updatedTree[id];
+  if (!node) {
+    throw new Error('Node not found!!!');
+  }
+  const parentNode = updatedTree[node.parent];
+  if (!parentNode) {
+    throw new Error('Can not remove root!!!');
+  }
+  if (node.id === parentNode.left) {
+    delete parentNode.left;
+  } else {
+    delete parentNode.right;
+  }
+  const walk = (node) => {
+    if (node.left) {
+      walk(updatedTree[node.left]);
+    }
+    if (node.right) {
+      walk(updatedTree[node.right]);
+    }
+    delete updatedTree[node.id];
+  };
+  if (node.left) {
+    walk(updatedTree[node.left]);
+  }
+  if (node.right) {
+    walk(updatedTree[node.right]);
+  }
+  delete updatedTree[id];
+  return updatedTree;
+}
 function payload(node) {
   const { id, parent, left, right, ...rest } = node;
   return rest;
@@ -140,7 +174,7 @@ function moveNode(tree, target, source, left = true) {
   if (sourceNode.parent === targetNode.id) {
     return moveNode(tree, source, target, left);
   }
-  const updated = remove(tree, source); // <== preserve leftmost
+  const updated = removeNode(tree, source); // <== preserve leftmost
 
   return insert(updated, target, sourceNode.id, left, payload(sourceNode));
 }
@@ -153,6 +187,7 @@ module.exports = {
   insertLeft,
   insertRight,
   payload,
-  remove,
+  removeNode,
+  removeSubtree,
   moveNode
 };

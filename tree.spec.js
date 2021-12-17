@@ -141,27 +141,27 @@ describe('tree', () => {
       expect(updated['107']).toHaveProperty('right', 1001);
     });
   });
-  describe('remove', () => {
+  describe('removeNode', () => {
     it('throws error when node not found', () => {
       const instance = tree.load(testData);
       expect(() => {
-        tree.remove(instance, -1).toThrow();
+        tree.removeNode(instance, -1).toThrow();
       });
     });
     it('throws error when removing root', () => {
       const instance = tree.load(testData);
       expect(() => {
-        tree.remove(instance, 100).toThrow();
+        tree.removeNode(instance, 100).toThrow();
       });
     });
     it('removes leafs nodes', () => {
       const instance = tree.load(testData);
-      const updated = tree.remove(instance, 107);
+      const updated = tree.removeNode(instance, 107);
       expect(updated['107']).toBeFalsy();
     });
     it('removes parents with 1 child', () => {
       const instance = tree.load(testData);
-      const updated = tree.remove(instance, 106);
+      const updated = tree.removeNode(instance, 106);
       expect(updated['105']).toBeTruthy();
       expect(updated['106']).toBeFalsy();
       expect(updated['107']).toBeTruthy();
@@ -170,7 +170,7 @@ describe('tree', () => {
     });
     it('removes parents with 2 child', () => {
       const instance = tree.load(testData);
-      const updated = tree.remove(instance, 105);
+      const updated = tree.removeNode(instance, 105);
       expect(updated['105']).toBeFalsy();
       expect(updated['106']).toBeTruthy();
       expect(updated['107']).toBeTruthy();
@@ -179,7 +179,7 @@ describe('tree', () => {
     });
     it('removes a branch, keeping left side', () => {
       const instance = tree.load(testData);
-      const updated = tree.remove(instance, 101, true);
+      const updated = tree.removeNode(instance, 101, true);
       expect(updated['101']).toBeFalsy();
       expect(updated['103']).toBeTruthy();
       expect(updated['104']).toBeFalsy();
@@ -188,12 +188,52 @@ describe('tree', () => {
     });
     it('removes a branch, keeping right side', () => {
       const instance = tree.load(testData);
-      const updated = tree.remove(instance, 101, false);
+      const updated = tree.removeNode(instance, 101, false);
       expect(updated['101']).toBeFalsy();
       expect(updated['103']).toBeFalsy();
       expect(updated['104']).toBeTruthy();
       expect(updated['100']).toHaveProperty('left', 104);
       expect(updated['104']).toHaveProperty('parent', 100);
+    });
+  });
+  describe('removeSubtree', () => {
+    it('throws error when node not found', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.removeNode(instance, -1).toThrow();
+      });
+    });
+    it('throws error when removing root', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.removeNode(instance, 100).toThrow();
+      });
+    });
+    it('removes subtree', () => {
+      const instance = tree.load(testData);
+      const updated = tree.removeSubtree(instance, 101);
+      /*
+      (100)
+        |
+      (102)
+        |
+      (105)
+        |
+      (106)
+        |
+      (107)
+      */
+      expect(updated['101']).toBeFalsy();
+      expect(updated['103']).toBeFalsy();
+      expect(updated['104']).toBeFalsy();
+
+      expect(updated['100']).toHaveProperty('parent', null);
+      expect(updated['100']).toHaveProperty('right', 102);
+      expect(updated['100']).not.toHaveProperty('left');
+
+      expect(updated['102']).toHaveProperty('parent', 100);
+      expect(updated['102']).toHaveProperty('left', 105);
+      expect(updated['102']).not.toHaveProperty('right');
     });
   });
   describe('payload', () => {
@@ -210,6 +250,15 @@ describe('tree', () => {
     });
   });
   describe('moveNode', () => {
+    test('throws on not valid moves', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.moveNode(instance, -105, 107);
+      }).toThrow();
+      expect(() => {
+        tree.moveNode(instance, 107, 101``);
+      }).toThrow();
+    });
     test('move node 2 levels up', () => {
       const instance = tree.load(testData);
       const updated = tree.moveNode(instance, 105, 107);
