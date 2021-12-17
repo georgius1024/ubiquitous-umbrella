@@ -40,7 +40,6 @@ function pack(tree) {
       return item;
     });
 }
-
 function clone(tree) {
   return Object.values(tree)
     .map((e) => ({ ...e }))
@@ -62,7 +61,7 @@ function insert(tree, parent, id, left, payload = {}) {
     id
   };
   if (child) {
-    newNode[side] = child;
+    newNode.left = child; // <== start from leftmost
     const childNode = updatedTree[child];
     childNode.parent = id;
   }
@@ -76,7 +75,6 @@ function insertLeft(tree, parent, id, payload = {}) {
 function insertRight(tree, parent, id, payload = {}) {
   return insert(tree, parent, id, false, payload);
 }
-
 function remove(tree, id, keepLeft = true) {
   const updatedTree = clone(tree);
 
@@ -92,9 +90,17 @@ function remove(tree, id, keepLeft = true) {
   const childToDrop = keepLeft ? node.right : node.left;
 
   if (node.id === parentNode.left) {
-    parentNode.left = childToKeep;
+    if (childToKeep) {
+      parentNode.left = childToKeep;
+    } else {
+      delete parentNode.left;
+    }
   } else {
-    parentNode.right = childToKeep;
+    if (childToKeep) {
+      parentNode.right = childToKeep;
+    } else {
+      delete parentNode.right;
+    }
   }
   if (childToKeep) {
     const childNode = updatedTree[childToKeep];
@@ -115,6 +121,29 @@ function remove(tree, id, keepLeft = true) {
   delete updatedTree[id];
   return updatedTree;
 }
+function payload(node) {
+  const { id, parent, left, right, ...rest } = node;
+  return rest;
+}
+function moveNode(tree, target, source, left = true) {
+  const targetNode = tree[target];
+  if (!targetNode) {
+    throw new Error('Target node not found!!!');
+  }
+  const sourceNode = tree[source];
+  if (!sourceNode) {
+    throw new Error('Source node not found!!!');
+  }
+  if (sourceNode.left && sourceNode.right) {
+    throw new Error("Can't move subtree!!!");
+  }
+  if (sourceNode.parent === targetNode.id) {
+    return moveNode(tree, source, target, left);
+  }
+  const updated = remove(tree, source); // <== preserve leftmost
+
+  return insert(updated, target, sourceNode.id, left, payload(sourceNode));
+}
 module.exports = {
   valid,
   load,
@@ -123,5 +152,7 @@ module.exports = {
   insert,
   insertLeft,
   insertRight,
-  remove
+  payload,
+  remove,
+  moveNode
 };
