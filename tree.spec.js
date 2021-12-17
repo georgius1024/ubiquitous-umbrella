@@ -256,7 +256,10 @@ describe('tree', () => {
         tree.moveNode(instance, -105, 107);
       }).toThrow();
       expect(() => {
-        tree.moveNode(instance, 107, 101``);
+        tree.moveNode(instance, 107, 101);
+      }).toThrow();
+      expect(() => {
+        tree.moveNode(instance, 107, 100);
       }).toThrow();
     });
     test('move node 2 levels up', () => {
@@ -435,7 +438,7 @@ describe('tree', () => {
       expect(updated['101']).toHaveProperty('right', 105);
 
       expect(updated['103']).toHaveProperty('parent', 101);
-      expect(updated['103']).not.toHaveProperty('right');
+      expect(updated['103']).not.toHaveProperty('left');
       expect(updated['103']).not.toHaveProperty('right');
 
       expect(updated['105']).toHaveProperty('parent', 101);
@@ -453,6 +456,173 @@ describe('tree', () => {
       expect(updated['106']).toHaveProperty('parent', 102);
       expect(updated['106']).not.toHaveProperty('right');
       expect(updated['106']).toHaveProperty('left', 107);
+    });
+  });
+
+  describe('moveSubtree', () => {
+    test('throws on not valid moves', () => {
+      const instance = tree.load(testData);
+      expect(() => {
+        tree.moveSubtree(instance, -105, 107);
+      }).toThrow();
+      expect(() => {
+        tree.moveSubtree(instance, 107, 101);
+      }).not.toThrow(); // Valid
+      expect(() => {
+        tree.moveSubtree(instance, 106, 101);
+      }).toThrow();
+      expect(() => {
+        tree.moveSubtree(instance, 107, 100);
+      }).toThrow();
+      expect(() => {
+        tree.moveSubtree(instance, 102, 103);
+      }).toThrow();
+      expect(() => {
+        tree.moveSubtree(instance, 102, 103, false);
+      }).not.toThrow();
+    });
+    test('can move leaf nodes (left)', () => {
+      const instance = tree.load(testData);
+      const updated = tree.moveSubtree(instance, 103, 107, true);
+      /*
+              (100)
+              /    \
+          (101)    (102)
+          /   \      |
+      (103) (104)  (105)
+        /            |
+      (107)        (106)
+      */
+
+      expect(updated['103']).toHaveProperty('parent', 101);
+      expect(updated['103']).toHaveProperty('left', 107);
+      expect(updated['103']).not.toHaveProperty('right');
+
+      expect(updated['107']).toHaveProperty('parent', 103);
+      expect(updated['107']).not.toHaveProperty('left');
+      expect(updated['107']).not.toHaveProperty('right');
+
+      expect(updated['106']).toHaveProperty('parent', 105);
+      expect(updated['106']).not.toHaveProperty('left');
+      expect(updated['106']).not.toHaveProperty('right');
+    });
+
+    test('can move leaf nodes (right)', () => {
+      const instance = tree.load(testData);
+      const updated = tree.moveSubtree(instance, 103, 107, false);
+      /*
+              (100)
+              /    \
+          (101)    (102)
+          /   \      |
+      (103) (104)  (105)
+        \            |
+      (107)        (106)
+      */
+
+      expect(updated['103']).toHaveProperty('parent', 101);
+      expect(updated['103']).toHaveProperty('right', 107);
+      expect(updated['103']).not.toHaveProperty('left');
+
+      expect(updated['107']).toHaveProperty('parent', 103);
+      expect(updated['107']).not.toHaveProperty('left');
+      expect(updated['107']).not.toHaveProperty('right');
+
+      expect(updated['106']).toHaveProperty('parent', 105);
+      expect(updated['106']).not.toHaveProperty('left');
+      expect(updated['106']).not.toHaveProperty('right');
+    });
+
+    test('can move branch nodes', () => {
+      const instance = tree.load(testData);
+      const updated = tree.moveSubtree(instance, 103, 106, true);
+      /*
+              (100)
+              /    \
+          (101)    (102)
+          /   \      |
+      (103) (104)  (105)
+        |
+      (106)        
+        |
+      (107)
+      */
+
+      expect(updated['103']).toHaveProperty('parent', 101);
+      expect(updated['103']).toHaveProperty('left', 106);
+      expect(updated['103']).not.toHaveProperty('right');
+
+      expect(updated['106']).toHaveProperty('parent', 103);
+      expect(updated['106']).toHaveProperty('left', 107);
+      expect(updated['106']).not.toHaveProperty('right');
+
+      expect(updated['107']).toHaveProperty('parent', 106);
+      expect(updated['107']).not.toHaveProperty('left');
+      expect(updated['107']).not.toHaveProperty('right');
+
+      expect(updated['105']).toHaveProperty('parent', 102);
+      expect(updated['105']).not.toHaveProperty('left');
+      expect(updated['105']).not.toHaveProperty('right');
+    });
+
+    test('can move complex branches to leaf nodes', () => {
+      const instance = tree.load(testData);
+      const updated = tree.moveSubtree(instance, 107, 101, true);
+      /*
+          (100)
+            |
+          (102)
+            |
+          (105)
+            |
+          (106)
+            |
+          (107)
+            |
+          (101)
+          /   \
+      (103) (104)
+     */
+
+      expect(updated['100']).toHaveProperty('parent', null);
+      expect(updated['100']).not.toHaveProperty('left');
+      expect(updated['100']).toHaveProperty('right', 102);
+
+      expect(updated['107']).toHaveProperty('parent', 106);
+      expect(updated['107']).toHaveProperty('left', 101);
+      expect(updated['107']).not.toHaveProperty('right');
+
+      expect(updated['101']).toHaveProperty('parent', 107);
+      expect(updated['101']).toHaveProperty('left', 103);
+      expect(updated['101']).toHaveProperty('right', 104);
+    });
+
+    test('can attach complex branches to free slots', () => {
+      const instance = tree.load(testData);
+      const updated = tree.moveSubtree(instance, 105, 101, false);
+      /*
+          (100)
+            |
+          (102)
+            |
+          (105)
+          /    \
+      (106)    (101)
+        |      /   \
+      (107) (103) (104)
+     */
+
+      expect(updated['100']).toHaveProperty('parent', null);
+      expect(updated['100']).not.toHaveProperty('left');
+      expect(updated['100']).toHaveProperty('right', 102);
+
+      expect(updated['105']).toHaveProperty('parent', 102);
+      expect(updated['105']).toHaveProperty('left', 106);
+      expect(updated['105']).toHaveProperty('right', 101);
+
+      expect(updated['101']).toHaveProperty('parent', 105);
+      expect(updated['101']).toHaveProperty('left', 103);
+      expect(updated['101']).toHaveProperty('right', 104);
     });
   });
 });
