@@ -458,7 +458,29 @@ describe('tree', () => {
       expect(updated['106']).toHaveProperty('left', 107);
     });
   });
-
+  describe('hasAsParent', () => {
+    it('returns true when third param is parent for second', () => {
+      const instance = tree.load(testData);
+      expect(tree.hasAsParent(instance, 103, 101)).toBe(true);
+      expect(tree.hasAsParent(instance, 104, 101)).toBe(true);
+      expect(tree.hasAsParent(instance, 103, 100)).toBe(true);
+      expect(tree.hasAsParent(instance, 104, 100)).toBe(true);
+      expect(tree.hasAsParent(instance, 107, 106)).toBe(true);
+      expect(tree.hasAsParent(instance, 106, 102)).toBe(true);
+      expect(tree.hasAsParent(instance, 107, 102)).toBe(true);
+      expect(tree.hasAsParent(instance, 103, 100)).toBe(true);
+      expect(tree.hasAsParent(instance, 107, 100)).toBe(true);
+    });
+    it('returns false when third param is NOT parent for second', () => {
+      const instance = tree.load(testData);
+      expect(tree.hasAsParent(instance, 103, 104)).toBe(false);
+      expect(tree.hasAsParent(instance, 104, 103)).toBe(false);
+      expect(tree.hasAsParent(instance, 101, 102)).toBe(false);
+      expect(tree.hasAsParent(instance, 101, 103)).toBe(false);
+      expect(tree.hasAsParent(instance, 101, 104)).toBe(false);
+      expect(tree.hasAsParent(instance, 107, 101)).toBe(false);
+    });
+  });
   describe('moveSubtree', () => {
     test('throws on not valid moves', () => {
       const instance = tree.load(testData);
@@ -480,6 +502,12 @@ describe('tree', () => {
       expect(() => {
         tree.moveSubtree(instance, 102, 103, false);
       }).not.toThrow();
+      expect(() => {
+        tree.moveSubtree(instance, 103, 101);
+      }).toThrow();
+      expect(() => {
+        tree.moveSubtree(instance, 104, 101);
+      }).toThrow();
     });
     test('can move leaf nodes (left)', () => {
       const instance = tree.load(testData);
