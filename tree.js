@@ -1,24 +1,36 @@
 function valid(data) {
-  return (
-    Array.isArray(data) &&
-    data.length &&
-    data.every((item) => 'id' in item && 'parent' in item && 'left' in item)
-  );
+  try {
+    load(data);
+    return true;
+  } catch (error) {
+    return error.message;
+  }
 }
 function load(data) {
+  const roots = data.filter((e) => !e.parent);
+  if (!roots.length) {
+    throw new Error('Root node is required');
+  }
+  if (roots.length > 1) {
+    throw new Error('Only one root node allowed');
+  }
+  if (data.find((e) => !e.id)) {
+    throw new Error('"id" field is required for all nodes');
+  }
   const map = data
     .map((item) => ({ ...item }))
-    .map((item) => ({
-      ...item
-    }))
+
     .reduce((map, item) => ({ ...map, [item.id]: item }), {});
   Object.values(map).forEach((item) => {
-    const parent = map[item.parent];
-    if (parent) {
+    const parentNode = map[item.parent];
+    if (parentNode) {
       if (item.left) {
-        parent.left = item.id;
+        parentNode.left = item.id;
       } else {
-        parent.right = item.id;
+        parentNode.right = item.id;
+      }
+      if (parentNode.right && !parentNode.fork) {
+        throw new Error('"right" children allowed only for fork nodes');
       }
     }
     delete item.left;
@@ -45,12 +57,29 @@ function clone(tree) {
     .map((e) => ({ ...e }))
     .reduce((map, item) => ({ ...map, [item.id]: item }), {});
 }
-function insert(tree, parent, id, left, payload = {}) {
+function insert(tree, parent, id, left = null, payload = {}) {
   const updatedTree = clone(tree);
   const parentNode = updatedTree[parent];
   if (!parentNode) {
-    throw new Error('Parent node not found!!!');
+    throw new Error('Parent node not found');
   }
+  if (parentNode.fork) {
+    if (left === null) {
+      if (!parentNode.left) {
+        left = true; // left is free - drop to left
+      } else if (!parentNode.right) {
+        left = false; // right is free - drop to right
+      } else {
+        left = true; // both are useed - place to left by default
+      }
+    }
+  } else {
+    left = left ?? true;
+    if (left === false) {
+      throw new Error('Parent node can\t accept "right" children');
+    }
+  }
+
   const side = left ? 'left' : 'right';
   const child = parentNode[side];
 
@@ -75,16 +104,21 @@ function insertLeft(tree, parent, id, payload = {}) {
 function insertRight(tree, parent, id, payload = {}) {
   return insert(tree, parent, id, false, payload);
 }
-function removeNode(tree, id, keepLeft = true) {
+function removeNode(tree, id, keepLeft = null) {
   const updatedTree = clone(tree);
 
   const node = updatedTree[id];
   if (!node) {
-    throw new Error('Node not found!!!');
+    throw new Error('Node not found');
   }
   const parentNode = updatedTree[node.parent];
   if (!parentNode) {
-    throw new Error('Can not remove root!!!');
+    throw new Error('Can not remove root');
+  }
+  if (node.fork && node.right && !node.left) {
+    keepLeft = keepLeft ?? false; // Because no left child, just right
+  } else {
+    keepLeft = keepLeft ?? true; // all other cases
   }
   const childToKeep = (keepLeft ? node.left : node.right) ?? null;
   const childToDrop = keepLeft ? node.right : node.left;
@@ -108,12 +142,8 @@ function removeNode(tree, id, keepLeft = true) {
   }
   if (childToDrop) {
     const walk = (node) => {
-      if (node.left) {
-        walk(updatedTree[node.left]);
-      }
-      if (node.right) {
-        walk(updatedTree[node.right]);
-      }
+      node.left && walk(updatedTree[node.left]);
+      node.right && walk(updatedTree[node.right]);
       delete updatedTree[node.id];
     };
     walk(updatedTree[childToDrop]);
@@ -126,11 +156,11 @@ function removeSubtree(tree, id) {
 
   const node = updatedTree[id];
   if (!node) {
-    throw new Error('Node not found!!!');
+    throw new Error('Node not found');
   }
   const parentNode = updatedTree[node.parent];
   if (!parentNode) {
-    throw new Error('Can not remove root!!!');
+    throw new Error('Can not remove root');
   }
   if (node.id === parentNode.left) {
     delete parentNode.left;
@@ -138,36 +168,27 @@ function removeSubtree(tree, id) {
     delete parentNode.right;
   }
   const walk = (node) => {
-    if (node.left) {
-      walk(updatedTree[node.left]);
-    }
-    if (node.right) {
-      walk(updatedTree[node.right]);
-    }
+    node.left && walk(updatedTree[node.left]);
+    node.right && walk(updatedTree[node.right]);
     delete updatedTree[node.id];
   };
-  if (node.left) {
-    walk(updatedTree[node.left]);
-  }
-  if (node.right) {
-    walk(updatedTree[node.right]);
-  }
-  delete updatedTree[id];
+  walk(node);
   return updatedTree;
 }
 function payload(node) {
-  const { id, parent, left, right, ...rest } = node;
+  const { id, parent, left, right, fork, ...rest } = node;
   return rest;
 }
-
 function swapChildren(tree, node) {
   const updatedTree = clone(tree);
 
   const parentNode = updatedTree[node];
   if (!parentNode) {
-    throw new Error('Node not found!!!');
+    throw new Error('Node not found');
   }
-
+  if (!parentNode.fork) {
+    throw new Error('Can not swap children of non-fork node');
+  }
   const { left, right } = parentNode;
   parentNode.left = right;
   parentNode.right = left;
@@ -183,11 +204,11 @@ function swapChildren(tree, node) {
 function moveNode(tree, target, source, left = true) {
   const targetNode = tree[target];
   if (!targetNode) {
-    throw new Error('Target node not found!!!');
+    throw new Error('Target node not found');
   }
   const sourceNode = tree[source];
   if (!sourceNode) {
-    throw new Error('Source node not found!!!');
+    throw new Error('Source node not found');
   }
   if (!sourceNode.parent) {
     throw new Error('Can not move root!!!');
