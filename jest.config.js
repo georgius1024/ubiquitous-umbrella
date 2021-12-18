@@ -30,9 +30,7 @@ module.exports = {
   coveragePathIgnorePatterns: ['/node_modules/'],
 
   // A list of reporter names that Jest uses when writing coverage reports
-  coverageReporters: [
-    "html"
-  ],
+  coverageReporters: ['html', 'text'],
 
   // An object that configures minimum threshold enforcement for coverage results
   // coverageThreshold: null,

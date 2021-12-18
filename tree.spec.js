@@ -103,6 +103,9 @@ describe('tree', () => {
       expect(() => {
         tree.insert(instance, 105, 108, true);
       }).not.toThrow();
+      expect(() => {
+        tree.insert(instance, 101, 108);
+      }).toThrow();
     });
 
     it('not throws error when parent is in tree', () => {
@@ -155,31 +158,22 @@ describe('tree', () => {
     });
     it('adds nodes on non-leaf fork node with default placement', () => {
       const instance = tree.load(testData);
-      const updated = tree.insert(tree.insert(instance, 101, 108), 101, 109);
+      instance['107'].fork = true;
+      const updated = tree.insert(tree.insert(instance, 107, 108), 107, 109);
       /*
-        <101>
+        <107>
          / \
-      (109) (104)
-        |
-      (108)
-        |
-      (103)
+      (108) (109)
       */
-      expect(updated['101']).toHaveProperty('parent', 100);
-      expect(updated['101']).toHaveProperty('left', 109);
-      expect(updated['101']).toHaveProperty('right', 104);
-      expect(updated['109']).toHaveProperty('parent', 101);
-      expect(updated['109']).toHaveProperty('left', 108);
+      expect(updated['107']).toHaveProperty('parent', 106);
+      expect(updated['107']).toHaveProperty('left', 108);
+      expect(updated['107']).toHaveProperty('right', 109);
+      expect(updated['109']).toHaveProperty('parent', 107);
+      expect(updated['109']).not.toHaveProperty('left');
       expect(updated['109']).not.toHaveProperty('right');
-      expect(updated['108']).toHaveProperty('parent', 109);
-      expect(updated['108']).toHaveProperty('left', 103);
+      expect(updated['108']).toHaveProperty('parent', 107);
+      expect(updated['108']).not.toHaveProperty('left');
       expect(updated['108']).not.toHaveProperty('right');
-      expect(updated['103']).toHaveProperty('parent', 108);
-      expect(updated['103']).not.toHaveProperty('left');
-      expect(updated['103']).not.toHaveProperty('right');
-      expect(updated['104']).toHaveProperty('parent', 101);
-      expect(updated['104']).not.toHaveProperty('left');
-      expect(updated['104']).not.toHaveProperty('right');
     });
     it('adds nodes on non-leaf fork node with direct placement', () => {
       const instance = tree.load(testData);
@@ -575,7 +569,7 @@ describe('tree', () => {
     });
     test('move branch node to another branch changes both branches (l)', () => {
       const instance = tree.load(testData);
-      const updated = tree.moveNode(instance, 101, 105);
+      const updated = tree.moveNode(instance, 101, 105, true);
       /*
               <100>
              /     \

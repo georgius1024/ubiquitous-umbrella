@@ -70,7 +70,7 @@ function insert(tree, parent, id, left = null, payload = {}) {
       } else if (!parentNode.right) {
         left = false; // right is free - drop to right
       } else {
-        left = true; // both are useed - place to left by default
+        throw new Error("Can't insert to this target");
       }
     }
   } else {
