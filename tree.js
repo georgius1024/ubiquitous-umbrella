@@ -200,7 +200,6 @@ function swapChildren(tree, node) {
   }
   return updatedTree;
 }
-
 function moveNode(tree, target, source, left = null) {
   const targetNode = tree[target];
   if (!targetNode) {
@@ -213,7 +212,7 @@ function moveNode(tree, target, source, left = null) {
   if (!sourceNode.parent) {
     throw new Error("Can't move root");
   }
-  if (sourceNode.fork && (sourceNode.left || sourceNode.right)) {
+  if (sourceNode.fork) {
     throw new Error("Can't move subtree");
   }
   if (sourceNode.parent === targetNode.id) {
@@ -232,7 +231,6 @@ function moveNode(tree, target, source, left = null) {
     payload(sourceNode)
   );
 }
-
 function hasAsParent(tree, node, candidate) {
   const walk = (node) => {
     if (node.id === candidate) {
@@ -245,24 +243,40 @@ function hasAsParent(tree, node, candidate) {
   };
   return walk(tree[node]);
 }
-function moveSubtree(tree, target, source, left = true) {
+function moveSubtree(tree, target, source, left = null) {
   const updatedTree = clone(tree);
   const targetNode = updatedTree[target];
   if (!targetNode) {
-    throw new Error('Target node not found!!!');
+    throw new Error('Target node not found');
   }
   if (!targetNode.parent) {
-    throw new Error('Can not move root!!!');
+    throw new Error("Can't move root");
+  }
+  if (targetNode.fork) {
+    if (left === null) {
+      if (!targetNode.left) {
+        left = true; // left is free - drop to left
+      } else if (!targetNode.right) {
+        left = false; // right is free - drop to right
+      } else {
+        throw new Error("Can't move to this target");
+      }
+    }
+  } else {
+    left = left ?? true;
+    if (left === false) {
+      throw new Error('Target node can\'t accept "right" children');
+    }
   }
   if ((targetNode.left && left) || (targetNode.right && !left)) {
-    throw new Error('Can not move there!!!');
+    throw new Error("Target node can't accept children on this side");
   }
   const sourceNode = updatedTree[source];
   if (!sourceNode) {
-    throw new Error('Source node not found!!!');
+    throw new Error('Source node not found');
   }
   if (hasAsParent(tree, targetNode.id, sourceNode.id)) {
-    throw new Error('Can not move node to its children!');
+    throw new Error("Can not move node to it's children");
   }
   // update old parent, remove link to source node
   const oldParentNode = updatedTree[sourceNode.parent];
@@ -278,10 +292,8 @@ function moveSubtree(tree, target, source, left = true) {
   } else {
     targetNode.right = sourceNode.id;
   }
-
   // update source node set new parent
   sourceNode.parent = target;
-
   return updatedTree;
 }
 
