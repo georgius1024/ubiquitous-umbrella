@@ -176,7 +176,7 @@ function removeSubtree(tree, id) {
   return updatedTree;
 }
 function payload(node) {
-  const { id, parent, left, right, fork, ...rest } = node;
+  const { id, parent, left, right, ...rest } = node; // fork attribute goes with the rest
   return rest;
 }
 function swapChildren(tree, node) {
@@ -201,7 +201,7 @@ function swapChildren(tree, node) {
   return updatedTree;
 }
 
-function moveNode(tree, target, source, left = true) {
+function moveNode(tree, target, source, left = null) {
   const targetNode = tree[target];
   if (!targetNode) {
     throw new Error('Target node not found');
@@ -211,29 +211,28 @@ function moveNode(tree, target, source, left = true) {
     throw new Error('Source node not found');
   }
   if (!sourceNode.parent) {
-    throw new Error('Can not move root!!!');
+    throw new Error("Can't move root");
   }
-  if (sourceNode.left && sourceNode.right) {
-    throw new Error("Can't move subtree!!!");
+  if (sourceNode.fork && (sourceNode.left || sourceNode.right)) {
+    throw new Error("Can't move subtree");
   }
-  if (targetNode.left === sourceNode.id) {
-    if (left) {
-      return moveNode(tree, source, target, left);
-    } else {
+  if (sourceNode.parent === targetNode.id) {
+    if (targetNode.fork) {
       return swapChildren(tree, targetNode.id);
+    } else {
+      return moveNode(tree, source, target, left);
     }
   }
-  if (targetNode.right === sourceNode.id) {
-    if (!left) {
-      return moveNode(tree, source, target, left);
-    } else {
-      return swapChildren(tree, targetNode.id);
-    }
-  }
-  const updated = removeNode(tree, source); // <== preserve leftmost
-
-  return insert(updated, target, sourceNode.id, left, payload(sourceNode));
+  const updated = removeNode(tree, source); // <== preserve auto
+  return insert(
+    updated,
+    targetNode.id,
+    sourceNode.id,
+    left,
+    payload(sourceNode)
+  );
 }
+
 function hasAsParent(tree, node, candidate) {
   const walk = (node) => {
     if (node.id === candidate) {
