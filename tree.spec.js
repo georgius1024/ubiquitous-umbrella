@@ -46,6 +46,16 @@ describe('tree', () => {
       expect(
         tree.valid([{ id: 100 }, { id: 101, parent: 100, left: false }])
       ).toBeString();
+      expect(
+        tree.valid([{ id: 100 }, { id: 101, parent: 101, left: false }])
+      ).toBeString();
+      expect(
+        tree.valid([
+          { id: 100 },
+          { id: 101, parent: 102, left: true },
+          { id: 102, parent: 101, left: true }
+        ])
+      ).toBeString();
     });
   });
   describe('load', () => {
@@ -67,6 +77,92 @@ describe('tree', () => {
       expect(result).toHaveProperty('101.right', 104);
       expect(result).toHaveProperty('102.right', 105);
       expect(result).toHaveProperty('105.parent', 102);
+    });
+  });
+  describe('isInTree', () => {
+    it('returns true for root', () => {
+      expect(
+        tree.isInTree({ 101: { id: 101, parent: null } }, 101, 101)
+      ).toBeTruthy();
+    });
+    it('returns true for root child', () => {
+      expect(
+        tree.isInTree(
+          { 101: { id: 101, parent: null }, 102: { id: 102, parent: 101 } },
+          102,
+          101
+        )
+      ).toBeTruthy();
+    });
+    it('returns true for root grand child', () => {
+      expect(
+        tree.isInTree(
+          {
+            101: { id: 101, parent: null },
+            102: { id: 102, parent: 101 },
+            103: { id: 103, parent: 102 }
+          },
+          103,
+          101
+        )
+      ).toBeTruthy();
+    });
+    it('returns false for side-root', () => {
+      expect(
+        tree.isInTree(
+          { 101: { id: 101, parent: null }, 102: { id: 102, parent: null } },
+          102,
+          101
+        )
+      ).toBeFalsy();
+    });
+    it('returns false for side-root child', () => {
+      expect(
+        tree.isInTree(
+          {
+            101: { id: 101, parent: null },
+            102: { id: 102, parent: null },
+            103: { id: 103, parent: 102 }
+          },
+          103,
+          101
+        )
+      ).toBeFalsy();
+    });
+    it('returns false for its own child', () => {
+      expect(
+        tree.isInTree(
+          { 101: { id: 101, parent: null }, 102: { id: 102, parent: 102 } },
+          102,
+          101
+        )
+      ).toBeFalsy();
+    });
+    it('returns false for nested loop', () => {
+      expect(
+        tree.isInTree(
+          {
+            101: { id: 101, parent: null },
+            102: { id: 102, parent: 104 },
+            103: { id: 103, parent: 102 },
+            104: { id: 104, parent: 103 }
+          },
+          104,
+          101
+        )
+      ).toBeFalsy();
+    });
+    it('returns false for id not from tree', () => {
+      expect(
+        tree.isInTree(
+          {
+            101: { id: 101, parent: null },
+            102: { id: 102, parent: 101 }
+          },
+          999,
+          101
+        )
+      ).toBeFalsy();
     });
   });
   describe('pack', () => {
@@ -982,7 +1078,7 @@ describe('tree', () => {
       expect(updated['106']).not.toHaveProperty('left');
       expect(updated['106']).not.toHaveProperty('right');
     });
-    test('can move leaf nodes with automatric right alugnment', () => {
+    test('can move leaf nodes with automatic right alignment', () => {
       const instance = tree.removeNode(tree.load(testData), 104);
       instance['103'].fork = true;
       const updated = tree.moveSubtree(instance, 101, 107);

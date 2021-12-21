@@ -17,12 +17,11 @@ function load(data) {
   if (data.find((e) => !e.id)) {
     throw new Error('"id" field is required for all nodes');
   }
-  const map = data
+  const tree = data
     .map((item) => ({ ...item }))
-
     .reduce((map, item) => ({ ...map, [item.id]: item }), {});
-  Object.values(map).forEach((item) => {
-    const parentNode = map[item.parent];
+  Object.values(tree).forEach((item) => {
+    const parentNode = tree[item.parent];
     if (parentNode) {
       if (item.left) {
         parentNode.left = item.id;
@@ -35,7 +34,27 @@ function load(data) {
     }
     delete item.left;
   });
-  return map;
+  const [{ id: rootId }] = roots;
+  const problem = Object.values(tree).find(
+    (e) => !isInTree(tree, e.id, rootId)
+  );
+  if (problem) {
+    throw new Error(`Health check failed. Check node "${problem.id}"`);
+  }
+  return tree;
+}
+function isInTree(tree, id, root, start = null) {
+  const node = tree[id];
+  if (!node) {
+    return false;
+  }
+  if (node.id === start) {
+    return false;
+  }
+  if (node.parent === root || node.id === root) {
+    return true;
+  }
+  return isInTree(tree, node.parent, root, start || id);
 }
 function pack(tree) {
   return Object.values(tree)
@@ -301,6 +320,7 @@ export default {
   valid,
   load,
   pack,
+  isInTree,
   clone,
   insert,
   insertLeft,
