@@ -1,4 +1,4 @@
-const tree = require('./tree');
+import tree from './tree';
 describe('tree', () => {
   const testData = [
     { id: 100, parent: null, left: null, fork: true },

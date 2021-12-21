@@ -297,7 +297,7 @@ function moveSubtree(tree, target, source, left = null) {
   return updatedTree;
 }
 
-module.exports = {
+export default {
   valid,
   load,
   pack,
