@@ -18,12 +18,12 @@ function load(data) {
     throw new Error('"id" field is required for all nodes');
   }
   const tree = data
-    .map((item) => ({ ...item }))
+    .map(({ left, ...item }) => ({ ...item, isLeft: left }))
     .reduce((map, item) => ({ ...map, [item.id]: item }), {});
   Object.values(tree).forEach((item) => {
     const parentNode = tree[item.parent];
     if (parentNode) {
-      if (item.left) {
+      if (item.isLeft) {
         parentNode.left = item.id;
       } else {
         parentNode.right = item.id;
@@ -32,7 +32,7 @@ function load(data) {
         throw new Error('"right" children allowed only for fork nodes');
       }
     }
-    delete item.left;
+    delete item.isLeft;
   });
   const [{ id: rootId }] = roots;
   const problem = Object.values(tree).find(
