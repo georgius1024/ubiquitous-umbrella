@@ -1108,4 +1108,26 @@ describe('tree', () => {
       expect(updated['106']).not.toHaveProperty('right');
     });
   });
+  describe('translateKeys', () => {
+    it('it translates keys keeping tree structure', () => {
+      const translations = {
+        100: 'x100',
+        101: 'x101',
+        102: 'x102',
+        103: 'x103',
+        104: 'x104',
+        105: 'x105',
+        106: 'x106',
+        107: 'x107'
+      };
+      const result = tree.translateKeys(tree.load(testData), translations);
+      expect(result).toHaveProperty('x100.left', 'x101');
+      expect(result).toHaveProperty('x100.right', 'x102');
+      expect(result).toHaveProperty('x101.left', 'x103');
+      expect(result).toHaveProperty('x101.right', 'x104');
+      expect(result).toHaveProperty('x102.right', 'x105');
+      expect(result).toHaveProperty('x105.parent', 'x102');
+      expect(result).toHaveProperty('x107.parent', 'x106');
+    });
+  });
 });

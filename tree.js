@@ -316,6 +316,57 @@ function moveSubtree(tree, target, source, left = null) {
   return updatedTree;
 }
 
+function translateKeys(tree, translations) {
+  function translated(key) {
+    if (key in translations) {
+      return translations[key];
+    }
+    return key;
+  }
+  function withTranslatedId({ id, ...rest }) {
+    return {
+      id: translated(id),
+      ...rest
+    };
+  }
+  function withTranslatedLeft({ left, ...rest }) {
+    if (left) {
+      return {
+        left: translated(left),
+        ...rest
+      };
+    }
+    return rest;
+  }
+  function withTranslatedRight({ right, ...rest }) {
+    if (right) {
+      return {
+        right: translated(right),
+        ...rest
+      };
+    }
+    return rest;
+  }
+  function withTranslatedParent({ parent, ...rest }) {
+    if (parent) {
+      return {
+        parent: translated(parent),
+        ...rest
+      };
+    }
+    return rest;
+  }
+  return Object.values(tree)
+    .map((e) =>
+      withTranslatedId(
+        withTranslatedLeft(withTranslatedRight(withTranslatedParent(e)))
+      )
+    )
+    .reduce((map, item) => {
+      return { ...map, [item.id]: item };
+    }, {});
+}
+
 export default {
   valid,
   load,
@@ -331,5 +382,6 @@ export default {
   hasAsParent,
   swapChildren,
   moveNode,
-  moveSubtree
+  moveSubtree,
+  translateKeys
 };
